@@ -6,9 +6,9 @@ from rest_framework.permissions import IsAuthenticated
 
 
 from django.contrib.auth.models import User
-from .models import Task
+from .models import Task,Category
 
-from .serializers import TaskSerializer, UserSerializer
+from .serializers import TaskSerializer, UserSerializer,CategorySerializer
 
 
 class TaskList(APIView):
@@ -65,3 +65,43 @@ class TaskDetail(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class CategoryView(APIView):
+    def get(self, request: Request, pk=None)->Response:
+        if pk is None:
+            category =Category.objects.all()
+            serializer = CategorySerializer(category, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            category = Category.objects.get(pk=pk)
+            serializer = CategorySerializer(category)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Category.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)        
+    def post(self, request: Request) -> Response:
+        serializer = CategorySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request: Request, pk) -> Response:
+        try:
+            category = Category.objects.get(pk=pk)
+        except Category.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CategorySerializer(category, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def delete(self, request: Request, pk) -> Response:
+        try:
+            category = Category.objects.get(pk=pk)
+            serializer = CategorySerializer(category)
+        except Category.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer.delete()
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
